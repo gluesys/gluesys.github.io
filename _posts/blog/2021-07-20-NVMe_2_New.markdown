@@ -1,0 +1,247 @@
+---
+layout:     post
+title:      "NVMe 2.0"
+date:       2021-07-16
+author:     김 성은(plumno1@gluesys.com), 정 현호(jhh9977@gluesys.com)
+categories: blog
+tags:       [NVMe, NVMe 2.0, Key, Value]
+cover:      "/assets/Flash_memory_NVMe.jpg"
+main:       "/assets/Flash_memory_NVMe.jpg"
+---
+
+안녕하세요! NVMe 관련 포스트를 추운 겨울에 썼던것 같은데 벌써 뜨거운 여름이 되었네요. 꽤 긴 시간이 지난 만큼 그 사이에 NVMe 2.0이 출시 됐습니다! 그런 만큼 이번 포스트는 NVMe 2.0에서 새로 추가된 새로운 기능을 메인으로 다루어 보도록 하겠습니다.
+
+&nbsp;
+
+## 새로운 기능
+
+### Simply copy command
+
+1.0도 아니고 2.0에서 새로 추가된 기능이 그저 복사 명령이라는 것이 신기하지 않나요? 그래도 2.0이나 되어서 나온 기능인 만큼 이 기능은 정말 데이터 복사만 수행하는것이 아닙니다.
+
+![Alt text](/assets/Simply_copy.png)
+<center>&#60; Simply copy command &#62;</center>
+
+위 그림과 같이 여러 블록에 나뉘어 있는 데이터들을 하나의 연속된 블록들로 복사하는 기능입니다.
+
+* SDLBA - Starting Destination Logical Block Address
+* NLB - Number of Logical Blocks
+
+### Domains and Partitioning
+
+사용자가 직접 도메인을 구성, 삭제등 도메인을 설정할 수 있는 기능이 추가되었습니다. 도메인은 NVM Subsystem에 속한 이름공간(Namespace)이나 컨트롤러들을 묶는 것입니다. 도메인은 속해있는 네임스페이스나 컨트롤러가 존재하지 않을 수 있으며 각 도메인은 독립적입니다. 따라서 한 도메인내의 컨트롤러가 고장이 났다고 해도 다른 도메인에는 영향이 가지 않습니다.
+
+&nbsp;
+
+
+### NVM set and Endurance Group Management
+
+한 NVM Subsystem에 만들어진 이름공간을 물리적으로 격리되어있는 것 처럼 보이게 하는 NVM set과 용량, 수명 관리를 위해 이름공간을 나누는 기능인 Endurance Group을 사용자가 직접 생성, 삭제등 조작이 가능하도록 하는 기능입니다.
+
+&nbsp;
+
+### Command and Feature Lockdown
+
+사용자가 포맷이나 관리자 명령 같이 함부로 사용하면 위험한 명령이나 기능을 사용할 수 없도록 막는 기능입니다. 이 기능은 사용자가 직접 금지할 명령이나 기능을 지정할 수 있으며 다시 금지를 해제하는 명령을 실행하거나 전원을 껐다 켤때까지 해당 명령, 기능을 사용할 수 없습니다.
+
+&nbsp;
+
+### Namespace Types
+
+다양한 유형의 특별한 규칙이 있는 이름 공간을 지원합니다. ZNS와 KV가 여기에 속합니다. 현재는 기존의 랜덤 쓰기가 가능한 이름공간, 순차적 쓰기만 가능한 이름공간, 논리주소로 데이터를 찾지 않고 `키`라는 특별한 주소를 가지고 데이터를 찾는 이름 공간 이 세가지만 지원합니다.
+
+&nbsp;
+
+### IO Command Set Independent Data Structure
+
+이름 공간이 컨트롤러에 연결되기 전에 필요한 모든 이름공간에서 일관되는 정보를 제공하는 새로운 데이터 구조(Data Structure)를 추가했다고 합니다. 이 데이터 구조는 총 4096바이트로 이루어져 있으며 NVM Set 식별자, Endurance Group 식별자, 이름공간의 쓰기 보호 여부 등의 정보가 담겨있습니다.
+
+&nbsp;
+
+### Rotational Media
+
+2.0부터는 HDD와 CD같은 회전 방식의 저장매체를 지원한다고 합니다. 읽고 쓰기는 물론이고 이름공간, Endurance Group 또한 생성이 가능하다고 합니다. 이로 인해 PCIe만 사용하는 메인보드로 일원화가 가능할지도 모르겠습니다.
+
+&nbsp;
+
+### Key-Value Command set
+
+Key-Value SSD를위한 새로운 명령어들이 생겼습니다. 자세한 포스팅은 링크에 있습니다.
+
+&nbsp;
+
+### ZNS Command set
+
+Key-Value Command sets 와 마찬가지로 ZNS SSD를 위한 새로은 명령어들이 생겼습니다. 자세한 포스팅은 링크에 있습니다.
+
+&nbsp;
+
+## 변경된 기능
+
+### Non-MDT Command Size Limits
+
+* MDT - Maximum Data Transfer(최대 데이터 크기)
+
+기존에는 데이터를 전송하는 명령에 대해서만 MDT를 지정할 수 있었지만 데이터를 전송하지 않는 Write Zeros, Dataset Management 등과 같은 명령어에서도 MDT를 지정할 수 있도록 변경되었습니다.
+
+&nbsp;
+
+### Telemetry Log Size Changes
+
+* Telemetry Log - 원격 측정을 통한 로그 수집 보통 시스템 충돌시 컨트롤러에서 자동으로 시작됨
+
+Telemetry Log의 데이터 저장장소인 `Data block`의 범위가 지정된 `Data Area`가 기존 `Area 3`에서 `Area 4`까지 확장되었습니다. `Area 1`에서 `Area 3`까지는 컨트롤러가 재시작될때마다 새로이 쓰여지지만 `Area 4`의 데이터는 재시작 후에도 지워지지 않습니다. 2.0버전에서 최대 32MB 까지 지원하며 앞으로 더 크게 늘려나갈 계획이라고 합니다.
+
+&nbsp;
+
+### Telemetry Enhancements
+
+사용자가 컨트롤러의 상태를 캡쳐하는 Host-Initiated log가 컨트롤러 개별로 있는것이 아닌 NVM Subsystem 전체가 공유하는 Shared Host-initiated log를 사용할때 세대 번호(Data Generation Number)가 새로 추가되었습니다. 이 기능은 사용자가 로그를 가져오도록 명령을 내렸을때 다른 컨트롤러들이 이 세대 번호를 비교하여 다르다면 로그를 가져오는동안 덮어 씌우지 못하도록 하는 기능을 가지고 있습니다. 세대 번호는 1바이트 숫자로 이루어져 있으며 00h부터 FFh까지 초과시 00h가 되는 형태로 이루어져 있습니다.
+
+&nbsp;
+
+### Namespace Attachment Limits
+
+기존에는 NVM Subsystem 전체에 대한 이름 공간의 수만 제한 할 수 있었지만 컨트롤러의 하드웨어적인 복잡도를 줄이기 위해 도메인 내의 최대 이름 공간의 수를 제한 할 수 있도록 기능을 강화 했다고 합니다. 도메인 내의 최대 이름 공간의 수(Maximum Domain Namespace Attachment, MDNA)는 도메인에 속하는 각 컨트롤러의 최대 이름 공간의 수(Maximum Controller Namespace Attachment, MCNA)를 더한것과 같아야 합니다. 마찬가지로 컨트롤러의 최대 이름 공간 수는 NVM Subsystem에서 지원하는 최대 이름 공간의 갯수(Maximum Number of Allowed Namespaces, MNAN)보다 반드시 같거나 작아야 합니다.
+
+&nbsp;
+
+### Protection Information Enhancement
+
+데이터를 쓰거나 읽을때 종단간 데이터 보안(End-to-End Data Protection)에 사용하는 순환 중복 검사(Cyclic Redundancy Check, CRC)의 Gurad Field를 기존 16비트에서 32비트, 64비트를 지원하도록 강화했다고 합니다. 이 정보를 저장하기 위해 데이터 구조를 기존 8바이트에서 16바이트로 변경했습니다. 이 데이터구조의 2번, 3번, 14번 Dword(Double Word, 1Word는 16비트)에 가변적 크기의 데이터를 담아 몇 비트의 Gurad Field를 사용하는지 정보를 저장합니다.
+
+&nbsp;
+
+### Aborting Commands During Format NVM Command
+
+Format NVM 명령 실행중 입출력 명령이 아닌 명령어를 실행하여 충돌이 생길 수 있었으나 몇가지 명령어를 제외하고 전부 제한하였습니다.  
+
+아래의 명령어들은 그대로 사용할 수 있습니다.
+* Get log Page      - 지정한 로그를 가져옵니다.
+* Identify          - NVM Subsystem에 속한 컨트롤러, 이름 공간, 도메인 등을 식별합니다.
+* Keep Alive        - 오류가 일어났는지 감시하는 Keep Alive 타이머를 설정합니다.
+* NVMe-MI Send      - NVMe-MI를 통해 사용자가 컨트롤러로 NVMe 관리자 명령을 보내는 명령입니다.
+* NVMe-MI Receive   - NVMe-MI를 통해 컨트롤러에서 사용자로 데이터를 받는 명령입니다.
+* Sanitize          - 데이터를 복구할 수 없도록 Write Zeros 명령을 사용합니다.
+* Set Features      - NVM Subsystem의 설정을 변경합니다.
+* 그 외 사용자 데이터에 영향을 끼치지 않는 제조사에서 제공하는 명령어
+
+&nbps;
+
+### Additional Controller Metadata Types
+
+* 영구 이벤트 로그(Persistent Event Log) - 사람이 읽을 수 있는 블랙박스와 같은 기능을 하는 로그들
+
+영구 이벤트 로그의 기능 설정 이벤트(Set Features Event)에서 설치 레코드 및 설정 오류 레코드 생성시 유용한 추가 컨트롤러 메타 데이터(Enhanced Controller Metadata) 유형이 추가되었습니다. 기능 설정 이벤트의 7Dh의 위치에 데이터가 저장되어 있으며 데이터가 가질 수 있는 정보는 다음과 같습니다.
+
+* 01h 		: Operating System Controller Name
+* 02h 		: Operating Driver Name
+* 03h 		: Operating Driver Version
+* 04h 		: Pre-boot Controller name
+* 05h 		: Pre-boot Driver name
+* 06h 		: Pre-boot Driver Version
+* 07h 		: System Processor Model
+* 08h 		: Chipset Driver Name
+* 09h 		: Chipset Driver Version
+* 0Ah 		: Operating System Name and Build
+* 0Bh 		: System Product Name
+* 0Ch 		: Firmware Version
+* 0Dh 		: Operating System Driver Filename
+* 0Eh 		: Display Driver Name
+* 0Fh 		: Display Driver Version
+* 10h 		: Host-Determined Failure Record
+* 18h - 1Fh : Vendor Specific
+
+모든 정보는 UTF-8 인코딩된 문자열로 반환됩니다.
+
+&nbps;
+
+### Multiple Controller Firmware Update
+
+중복 다운로드로 인한 정의되지 않은 동작 발생에 대비하여 도메인이 중복 다운로드를 탐지하여 호스트에 보낼 수 있도록 하는 기능이 추가되었습니다.
+
+* DWD0 블록에 추가된 MUD(Multiple Update Detected) 필드를 통해 컨트롤러가 중복 펌웨어/부트 파티션 이미지 업데이트 명령 시퀀스를 감지할 수 있는지의 여부를 설정할 수 있습니다.
+* DWD10 블록에 추가된 SMUD(Support Multiple Detection) 필드를 통해 MUD 필드의 값이 결정됩니다.  
+  SMUD=1 -> MUD 필드는 Management Endpoint 또는 Admin Submission Queue를 통해 이미지 업데이트 명령 시퀀스를 감지할 수 있습니다.
+  SMUD=0 -> MUD 필드는 0으로 설정되어, 이미지 업데이트 명령 시퀀스 감지가 불가능합니다.
+
+&nbsp;
+
+### Time To Ready Enhancement
+
+컨트롤러 준비에 종속적인 Namespace 준비 모드와 컨트롤러 준비에 독립적인 Namespace 준비 모드를 구분할 수 있는 기능이 추가되었습니다.
+
+* 현재 사용중인 모드와 두 컨트롤러 준비 모드에 대한 지원 비트 및 ready timeout 값이 추가되었습니다.
+* I/O Command Set Independent Identify Namespace Data Structure에 상태코드인 NSTAT(Namespace Status)를 추가되었습니다.
+  Namespace가 준비 상태인지 식별할 수 있습니다.
+
+&nbsp;
+
+### Graceful Disconnection
+
+NVMe I/O Queue 삭제 명령이 추가되었습니다. 패브릭 기반 NVMe에만 적용되며, 개별 I/O Queue의 삭제로 인한 NVMe 전송 연결 유지를 위한 기능도 함께 제공됩니다.
+
+* Connect Command 제출 Queue 엔트리 블록에 개별 I/O Queue 삭제를 지원하는 비트가 추가되었습니다.
+* Disconnect Command 제출 Queue 엔트리 블록이 추가되었습니다.
+
+#### I/O queue 삭제 플로우
+
+호스트 컨트롤러 간 NVMe I/O Queue 삭제 플로우는 다음과 같습니다.
+
+1. 호스트는 I/O Queue 삭제 명령어를 컨트롤러에 제출합니다.
+2. 컨트롤러는 I/O Queue 삭제 명령어를 수행 후, 결과를 호스트에 보냅니다.
+3. 성공적으로 삭제되었다면, 호스트는 NVMe I/O Queue 리소스를 삭제를 완료합니다.
+4. 호스트와 컨트롤러는 선택적으로 NVMe 전송 연결 삭제에 대한 통신을 진행할 수 있습니다.  
+   호스트와 컨트롤러가 NVMe 전송 연결 및 관련 리소스 삭제하려면 NVMe 전송 연결 및 연결된 모든 NVMe Queue(I/O Queue, 관리 Queue)이 삭제된 후 가능합니다.
+
+&nbsp;
+
+### Multiple Controller Shutdown Enhancement
+
+NVMe-MI 종료 명령을 통해 도메인 또는 NVM Subsystem의 모든 컨트롤러를 종료할 수 있는 기능이 추가되었습니다. 
+
+* Shutdown 관련 명령어 필드 및 세트가 추가되었습니다.
+* 정상 종료 및 갑작스러운 종료를 구분할 수 있습니다.
+
+&nbsp;
+
+### Persistent Event Log Context Counter
+
+호스트 관리자가 로그 페이지를 통해 컨텍스트의 변경되는지의 여부를 감지할 수 있도록, 영구 이벤트 로그에 컨텍스트 생성 번호가 추가되었습니다.
+
+* Persistent Event Log 블록에 Generation Number 필드가 추가되었습니다.
+  Generation Number는 호스트가 로그 페이지를 읽는 동안 영구 로그 이벤트 로그에 추가됩니다. 2byte의 크기로, FFFFh 값이면 0h로 지워집니다.
+
+&nbsp;
+
+### Get Log Page Index Offsets
+
+로그 페이지의 데이터 구조 목록에 인덱스 오프셋을 지정할 수 있는 기능이 추가되었습니다.
+
+Get Log Page 명령어에 오프셋 지원 유무를 설정해주는 필드가 추가되어 사용할 수 있습니다.
+
+&nbsp;
+
+## Transport Layer Security(TLS) 1.3 Support
+
+기존 스펙에 TCP에 대한 NVMe 전송 바인딩이 추가되었습니다.
+
+* Discovery Log Entry 블록의 TRTYPE(Transport Type) 필드에 `TCP Transport`의 정의가 3번 째 비트로 추가되었습니다.
+
+&nbsp;
+
+### ZNS Status Code and Async Notification
+
+컨트롤러의 이동으로 인해 요청된 새로운 Zone 상태에 도달하지 못 할 경우, Zone Management Send 명령어가 반환할 수 있는 새로운 상태 코드가 추가되었습니다.
+
+* 새로운 상태 코드
+  **Zone is Read Only, Zone is Offline**
+* Zone Management Send는 명령어 처리 중간에 의도치 않은 상태 이탈인 새로운 상태 코드를 호스트에 알릴 수 있습니다.
+  해당 상태코드의 사용은 비동기 이벤트 발생시키지 않습니다.
+
+&nbsp;
+
+[참고]
+
+NVM Subsystem:
+ * 하나 이상의 컨트롤러와 비휘발성 메모리가 통합된 것, 보통은 SSD하나를 뜻하나 SSD가 여러개가 하나로 묶여있는 스토리지 시스템도 하나의 NVMe Subsystem으로 볼 수 있음
